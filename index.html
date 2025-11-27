@@ -1,249 +1,78 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Internet - Wikipedia</title> <!-- Camouflage Title -->
+  <title>GhostLink</title>
   <style>
     /* --- CORE THEME --- */
     body { margin: 0; background: #ece5dd; font-family: sans-serif; height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; user-select: none; -webkit-user-select: none; }
     
-    /* --- PANIC BUTTON (Hidden by default, Moveable) --- */
-    #panic-btn { 
-      display: none; 
-      position: fixed; 
-      top: 10px; 
-      left: 10px; 
-      z-index: 20002; /* Highest */
-      font-size: 24px; 
-      cursor: move; 
-      opacity: 0.8; 
-      background: rgba(255,255,255,0.9); 
-      border-radius: 50%; 
-      width: 45px; 
-      height: 45px; 
-      align-items: center; 
-      justify-content: center; 
-      border: 2px solid #ff4444; 
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      touch-action: none; 
-      user-select: none;
-    }
-    #panic-btn:active { background: #ffe6e6; transform: scale(0.95); }
-
-    /* --- FAKE SCREEN (REALISTIC WIKIPEDIA) --- */
-    /* Z-Index 999 ensures it covers the app (Z-1) but sits under Lock Screen (Z-1000) */
-    #fake-screen { position: fixed; inset: 0; background: #fff; z-index: 999; overflow-y: auto; color: #202122; font-family: sans-serif; line-height: 1.6; transition: background 0.3s, color 0.3s; }
-    
-    /* Wiki Dark Mode Overrides */
-    #fake-screen.wiki-dark { background: #202122; color: #f8f9fa; }
-    #fake-screen.wiki-dark .mw-header { background: #2a2a2a; border-bottom: 1px solid #555; }
-    #fake-screen.wiki-dark .mw-body { background: #202122; }
-    #fake-screen.wiki-dark .firstHeading { border-bottom: 1px solid #555; }
-    #fake-screen.wiki-dark .infobox, #fake-screen.wiki-dark .toc { background: #2a2a2a; border: 1px solid #555; }
-    #fake-screen.wiki-dark .mw-link { color: #809dff; }
-    #fake-screen.wiki-dark .mw-footer { background: #2a2a2a; border-top: 1px solid #555; color: #ccc; }
-    #fake-screen.wiki-dark .mw-search { background: #444; color: #eee; border: 1px solid #666; }
-    #fake-screen.wiki-dark .secret-w { color: #888; }
-
-    /* Wiki Low Data Mode (Lite) */
-    #fake-screen.wiki-lite { font-family: 'Times New Roman', serif; background: #fff; color: #000; }
-    #fake-screen.wiki-lite .mw-header, #fake-screen.wiki-lite .infobox, #fake-screen.wiki-lite .toc, #fake-screen.wiki-lite .mw-footer { display: none !important; }
-    #fake-screen.wiki-lite .mw-body { padding: 10px; max-width: 100%; }
-    #fake-screen.wiki-lite .firstHeading { font-size: 1.5em; border: none; }
-    #fake-screen.wiki-lite .mw-tagline { display: none; }
-    
-    /* Wiki Controls (Top Right) */
-    .wiki-controls { display: flex; gap: 15px; margin-left: auto; }
-    .wiki-btn { font-size: 18px; cursor: pointer; opacity: 0.6; }
-    
-    /* Wiki Header */
-    .mw-header { display: flex; align-items: center; border-bottom: 1px solid #a2a9b1; padding: 10px 16px; background: #fff; position: sticky; top: 0; z-index: 10; }
-    .mw-logo-icon { font-size: 24px; margin-right: 15px; font-family: serif; font-weight: bold; }
-    .mw-search { flex: 1; background: #f8f9fa; border: 1px solid #cdcdcd; padding: 8px; border-radius: 2px; font-size: 13px; color: #72777d; max-width: 200px; }
-    
-    /* Wiki Body */
-    .mw-body { padding: 16px; max-width: 900px; margin: 0 auto; background: #fff; transition: background 0.3s; }
-    .firstHeading { font-family: 'Linux Libertine', 'Georgia', Times, serif; font-size: 2rem; border-bottom: 1px solid #a2a9b1; margin-bottom: 0.5em; padding-bottom: 5px; font-weight: normal; }
-    .mw-tagline { font-size: 13px; color: #54595d; margin-bottom: 10px; }
-    
-    /* Wiki Content Styles */
-    .mw-p { margin-bottom: 1.2em; font-size: 15px; text-align: justify; }
-    .mw-link { color: #3366cc; text-decoration: none; }
-    .mw-link:visited { color: #795cb2; }
-    .mw-link:hover { text-decoration: underline; }
-    .mw-ref { font-size: 11px; color: #3366cc; vertical-align: super; cursor: pointer; }
-    
-    /* Info Box */
-    .infobox { border: 1px solid #a2a9b1; background: #f8f9fa; float: right; width: 280px; margin: 0 0 10px 10px; padding: 5px; font-size: 88%; line-height: 1.5em; clear: right; display: none; } /* Hidden on mobile default */
-    @media(min-width: 768px) { .infobox { display: block; } }
-    
-    /* Table of Contents */
-    .toc { background-color: #f8f9fa; border: 1px solid #a2a9b1; padding: 10px; display: table; margin-bottom: 1em; font-size: 95%; }
-    .toc-title { font-weight: bold; text-align: center; margin-bottom: 5px; }
-    .toc ul { list-style: none; padding-left: 20px; margin: 0; }
-    .toc li { margin-bottom: 3px; }
-    
-    /* Headings */
-    .mw-h2 { font-family: 'Linux Libertine', 'Georgia', Times, serif; font-size: 1.5em; border-bottom: 1px solid #a2a9b1; margin: 1em 0 0.5em 0; padding-bottom: 3px; font-weight: normal; }
-    
-    /* Footer */
-    .mw-footer { background-color: #f8f9fa; border-top: 1px solid #a2a9b1; padding: 20px; font-size: 12px; margin-top: 40px; color: #202122; transition: background 0.3s; }
-    .footer-links { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
-    
-    /* THE TRIGGER */
-    .secret-link { color: #202122; text-decoration: none; cursor: default; }
-    .secret-w { 
-        cursor: pointer; 
-        font-weight: bold; 
-        color: #555; 
-        font-family: 'Linux Libertine', serif; 
-        font-size: 14px;
-        padding: 5px;
-    }
-    .secret-w:hover { color: #000; transform: scale(1.2); }
-
-    /* --- GLASSMORPHISM LOCK SCREEN --- */
+    /* --- LOGIN SCREEN --- */
     #lock-screen { 
       position: fixed; 
       inset: 0; 
-      z-index: 1000; /* HIGHER than fake screen (999) */
-      display: none; 
+      z-index: 100; 
+      display: flex; 
       flex-direction: column; 
       align-items: center; 
       justify-content: center; 
-      transition: opacity 0.5s;
-      /* Glass Effect */
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
+      background: #ece5dd; /* Standard chat background */
     }
-    /* Dark mode glass support */
-    body.dark-glass #lock-screen { background: rgba(0, 0, 0, 0.6); }
 
-    .lock-logo { width: 80px; height: 80px; background: #128C7E; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: white; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    input.pass { padding: 15px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; text-align: center; margin-bottom: 10px; width: 80%; max-width: 300px; outline: none; background: rgba(255,255,255,0.9); }
-    input.pass:focus { border-color: #128C7E; background: #fff; }
+    .lock-logo { width: 80px; height: 80px; background: #075e54; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: white; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    input.pass { padding: 15px; font-size: 16px; border-radius: 10px; border: 1px solid #ddd; text-align: center; margin-bottom: 10px; width: 80%; max-width: 300px; outline: none; background: white; }
+    input.pass:focus { border-color: #075e54; }
     button.btn { padding: 12px 30px; background: #075e54; color: white; border: none; border-radius: 30px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     button.btn:active { transform: scale(0.98); }
-    .link-btn { background: none; border: none; color: #075e54; text-decoration: underline; cursor: pointer; margin-top: 15px; font-size: 13px; font-weight: bold; text-shadow: 0 0 2px rgba(255,255,255,0.8); }
     
-    /* --- MATRIX ANIMATION SCREEN --- */
-    #matrix-screen {
+    /* --- ANIMATION OVERLAYS --- */
+    #matrix-screen, #sylus-screen, #goofy-screen {
       display: none;
       position: fixed;
       inset: 0;
-      background: black;
-      z-index: 20000; /* Highest priority */
+      z-index: 20000;
       overflow: hidden;
+      align-items: center;
+      justify-content: center;
     }
+
+    /* Matrix */
+    #matrix-screen { background: black; }
     #matrix-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #0F0;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 28px;
-      font-weight: bold;
-      text-shadow: 0 0 10px #0F0;
-      white-space: nowrap;
-      opacity: 0;
-      transition: opacity 1s;
-      letter-spacing: 2px;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      color: #0F0; font-family: 'Courier New', monospace; font-size: 28px; font-weight: bold;
+      text-shadow: 0 0 10px #0F0; opacity: 0; transition: opacity 1s;
     }
 
-    /* --- SYLUS ANIMATION SCREEN --- */
-    #sylus-screen {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: black;
-      z-index: 20000;
-      overflow: hidden;
-      align-items: center;
-      justify-content: center;
-    }
-    /* Embed styling for Tenor */
-    .tenor-gif-embed {
-        width: 100%;
-        height: 100%;
-        pointer-events: none; /* Prevent interaction */
-        opacity: 0.6; /* Fade for text */
-    }
+    /* Sylus (Tenor) */
+    #sylus-screen { background: black; }
+    .tenor-gif-embed { width: 100%; height: 100%; pointer-events: none; opacity: 0.6; }
     #sylus-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #ff0033; /* Crimson */
-      font-family: 'Georgia', serif;
-      font-size: 22px;
-      font-style: italic;
-      text-shadow: 0 0 15px black, 0 0 5px #ff0033;
-      text-align: center;
-      width: 90%;
-      opacity: 0;
-      transition: opacity 2s ease-in;
-      z-index: 20001;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      color: #ff0033; font-family: 'Georgia', serif; font-size: 22px; font-style: italic;
+      text-shadow: 0 0 15px black; text-align: center; width: 90%;
+      opacity: 0; transition: opacity 2s ease-in; z-index: 20001;
     }
 
-    /* --- GOOFY ANIMATION SCREEN (NEW STYLES) --- */
-    #goofy-screen {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: #111;
-      z-index: 20000;
-      overflow: hidden;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    /* Keyframes for the wave dance effect */
-    @keyframes waveColor {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
+    /* Goofy */
+    #goofy-screen { background: #111; }
+    @keyframes waveColor { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
     #goofy-text {
-      /* Cursive Font */
-      font-family: 'Brush Script MT', 'Segoe Script', cursive;
-      font-size: 38px; /* Larger for cursive */
-      text-align: center;
-      max-width: 80%;
-      padding: 20px;
-      
-      /* CRIMSON WAVE DANCE EFFECT */
-      background: linear-gradient(
-        90deg,
-        #8B0000, /* Dark Crimson */
-        #DC143C, /* Crimson */
-        #FF0000, /* Red */
-        #DC143C, /* Crimson */
-        #8B0000  /* Dark Crimson */
-      );
-      background-size: 300% 300%; /* Make it large enough to move */
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      animation: waveColor 4s ease infinite; /* The actual dance */
-      
-      /* Purple Boundary */
-      filter: drop-shadow(0px 0px 3px #800080) drop-shadow(0px 0px 6px #4B0082);
-      
-      opacity: 0; 
-      transition: opacity 1.5s ease-in-out; 
+      font-family: 'Brush Script MT', cursive; font-size: 38px; text-align: center; max-width: 80%; padding: 20px;
+      background: linear-gradient(90deg, #8B0000, #DC143C, #FF0000, #DC143C, #8B0000);
+      background-size: 300% 300%; -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: waveColor 4s ease infinite; filter: drop-shadow(0px 0px 3px #800080);
+      opacity: 0; transition: opacity 1.5s ease-in-out;
     }
 
-    /* --- CONTACT LIST --- */
+    /* --- APP UI --- */
     #contact-screen { display: none; flex-direction: column; height: 100%; background: #fff; position: relative; z-index: 1; }
     .app-header { background: #075e54; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10; }
     .header-content h1 { margin: 0; font-size: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
     .edit-self-btn { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 16px; cursor: pointer; }
     .self-avatar-small { width: 30px; height: 30px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #075e54; background-size: cover; background-position: center; border: 2px solid rgba(255,255,255,0.5); }
+    
     .contact-list { flex: 1; overflow-y: auto; padding-bottom: 80px; }
     .contact { border-bottom: 1px solid #f0f0f0; padding: 15px; }
     .contact-main { display: flex; align-items: center; cursor: pointer; justify-content: space-between; }
@@ -259,28 +88,11 @@
     .edit-btn { color: #075e54; }
     .sub-contacts { padding-left: 65px; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     .sub-badge { background: #e8f5e9; color: #075e54; border: 1px solid #075e54; border-radius: 12px; padding: 4px 10px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-    .fab { position: absolute; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #25D366; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; border: none; transition: transform 0.2s; z-index: 20; }
-    .features-btn { position: absolute; bottom: 90px; right: 28px; width: 45px; height: 45px; background: #fff; border-radius: 50%; color: #075e54; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; border: none; z-index: 20; }
-
-    /* --- FAKE STATUS BAR --- */
-    .fake-status-bar {
-        background: rgba(0,0,0,0.2);
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 2px 10px;
-        font-size: 11px;
-        font-weight: bold;
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        z-index: 15;
-        backdrop-filter: blur(2px);
-    }
-    .fs-right { display: flex; gap: 5px; }
-
+    
+    .fab { position: absolute; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #25D366; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; border: none; z-index: 20; }
+    
     /* --- CHAT SCREEN --- */
-    #chat-screen { display: none; flex-direction: column; height: 100%; background: #e5ddd5; position: relative; background-size: cover; background-position: center; transition: background-image 0.3s ease; padding-top: 20px; z-index: 1; } 
+    #chat-screen { display: none; flex-direction: column; height: 100%; background: #e5ddd5; position: relative; background-size: cover; background-position: center; z-index: 1; } 
     #chat-screen.has-wallpaper::before { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.4); pointer-events: none; }
     
     .chat-header { background: #075e54; color: white; padding: 10px 15px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 10; }
@@ -289,66 +101,14 @@
     .header-avatar { width: 40px; height: 40px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #075e54; font-size: 20px; background-size: cover; background-position: center; }
     .header-info { display: flex; flex-direction: column; justify-content: center; }
     .header-info h4 { margin: 0; font-size: 16px; font-weight: 500; line-height: 1.2; }
-    #typing-indicator { font-size: 12px; font-style: italic; opacity: 0.8; display: none; line-height: 1.2; }
     #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 6px; scroll-behavior: smooth; z-index: 1; }
     
-    /* --- WHATSAPP BUBBLES & ANIMATION --- */
-    @keyframes msgSlide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
-    .msg { 
-        padding: 6px 10px; 
-        border-radius: 7.5px; 
-        max-width: 75%; 
-        width: fit-content; 
-        font-size: 15px; 
-        position: relative; 
-        box-shadow: 0 1px 1px rgba(0,0,0,0.1); 
-        line-height: 1.3; 
-        cursor: pointer; 
-        user-select: none; 
-        display: flex; 
-        flex-direction: column; 
-        animation: msgSlide 0.2s ease-out; /* Slide Animation */
-    }
-    .msg.me { 
-        align-self: flex-end; 
-        background: #dcf8c6; 
-        border-top-right-radius: 0; 
-        align-items: flex-end;
-        margin-right: 5px;
-    }
-    /* Tail for sent messages */
-    .msg.me::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: -8px;
-        width: 0;
-        height: 0;
-        border-style: solid;
-        border-width: 0 0 10px 10px;
-        border-color: transparent transparent transparent #dcf8c6;
-    }
-
-    .msg.her { 
-        align-self: flex-start; 
-        background: #fff; 
-        border-top-left-radius: 0; 
-        align-items: flex-start;
-        margin-left: 5px;
-    }
-    /* Tail for received messages */
-    .msg.her::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -8px;
-        width: 0;
-        height: 0;
-        border-style: solid;
-        border-width: 0 10px 10px 0;
-        border-color: transparent #fff transparent transparent;
-    }
+    /* Messages */
+    .msg { padding: 6px 10px; border-radius: 7.5px; max-width: 75%; width: fit-content; font-size: 15px; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); line-height: 1.3; cursor: pointer; display: flex; flex-direction: column; }
+    .msg.me { align-self: flex-end; background: #dcf8c6; border-top-right-radius: 0; align-items: flex-end; margin-right: 5px; }
+    .msg.me::before { content: ""; position: absolute; top: 0; right: -8px; width: 0; height: 0; border-style: solid; border-width: 0 0 10px 10px; border-color: transparent transparent transparent #dcf8c6; }
+    .msg.her { align-self: flex-start; background: #fff; border-top-left-radius: 0; align-items: flex-start; margin-left: 5px; }
+    .msg.her::before { content: ""; position: absolute; top: 0; left: -8px; width: 0; height: 0; border-style: solid; border-width: 0 10px 10px 0; border-color: transparent #fff transparent transparent; }
 
     .msg-sender-name { font-size: 10px; color: #e53935; font-weight: bold; margin-bottom: 2px; } 
     .msg-content { white-space: pre-wrap; word-wrap: break-word; max-width: 100%; }
@@ -359,169 +119,72 @@
     .audio-msg { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 5px; margin-bottom: 2px; min-width: 150px; }
     .play-icon { font-size: 20px; cursor: pointer; }
     .wave { height: 3px; background: #999; flex: 1; border-radius: 2px; }
+    
     #reply-preview { display: none; background: #f0f0f0; border-left: 5px solid #075e54; padding: 8px 12px; justify-content: space-between; align-items: center; border-top: 1px solid #ddd; }
     #reply-info { flex: 1; overflow: hidden; }
     #reply-to-name { font-weight: bold; color: #075e54; font-size: 12px; }
     #reply-to-text { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #cancel-reply { border: none; background: transparent; font-size: 18px; cursor: pointer;}
     .quote-box { background: rgba(0,0,0,0.06); border-left: 4px solid #075e54; border-radius: 4px; padding: 4px 8px; margin-bottom: 4px; font-size: 12px; color: #555; display: flex; flex-direction: column; }
+    
     #input-area { display: flex; padding: 8px; background: #f0f0f0; gap: 6px; align-items: flex-end; min-height: 50px; box-sizing: border-box; z-index: 1; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
     #input-area.hidden { display: none !important; } 
     #txt { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; outline: none; font-size: 15px; background: white; resize: none; font-family: inherit; height: 22px; max-height: 120px; overflow-y: auto; line-height: 20px;}
     .icon-btn { background: transparent; color: #555; width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: 0.2s; flex-shrink: 0;}
     .icon-btn.active { color: #d32f2f; animation: pulse 1.5s infinite; }
-    .icon-btn.encrypted { color: #075e54; background: #cfd8dc; }
     .send-btn { background: #075e54; color: white; margin-bottom: 1px; width: 40px; height: 40px; font-size: 18px;} 
     #imgInput, #wallpaperInput, #profilePicInput { display: none; }
     .action-btn { background: transparent; border: none; color: white; font-size: 20px; cursor: pointer; padding: 5px; }
 
-    /* Typing Bubble Animation */
-    .typing-bubble {
-      background: #fff;
-      padding: 10px 15px;
-      border-radius: 20px;
-      border-bottom-left-radius: 2px;
-      display: none; /* Hidden by default */
-      align-items: center;
-      gap: 4px;
-      width: fit-content;
-      margin-left: 5px;
-      margin-bottom: 10px;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-    }
+    /* Typing Bubble */
+    .typing-bubble { background: #fff; padding: 10px 15px; border-radius: 20px; border-bottom-left-radius: 2px; display: none; align-items: center; gap: 4px; width: fit-content; margin-left: 5px; margin-bottom: 10px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
     .dot { width: 6px; height: 6px; background: #b6b5ba; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
-    .dot:nth-child(1) { animation-delay: -0.32s; }
-    .dot:nth-child(2) { animation-delay: -0.16s; }
+    .dot:nth-child(1) { animation-delay: -0.32s; } .dot:nth-child(2) { animation-delay: -0.16s; }
     @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
     /* Unread Badge */
-    .unread-badge {
-      background: #25D366; color: white; font-size: 11px; font-weight: bold;
-      min-width: 20px; height: 20px; border-radius: 10px; display: none; /* Hidden by default */
-      align-items: center; justify-content: center; padding: 0 5px;
-      margin-left: auto;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-    }
+    .unread-badge { background: #25D366; color: white; font-size: 11px; font-weight: bold; min-width: 20px; height: 20px; border-radius: 10px; display: none; align-items: center; justify-content: center; padding: 0 5px; margin-left: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 
-    /* Modal */
-    #wp-modal, #features-modal, #duress-setup-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
+    /* Modals */
+    #wp-modal, #profile-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
     .wp-card { background: white; width: 80%; max-width: 300px; border-radius: 10px; padding: 20px; text-align: center; max-height: 80vh; overflow-y: auto; }
     .wp-btn { display: block; width: 100%; padding: 10px; margin: 10px 0; background: #eee; border: none; border-radius: 5px; cursor: pointer; }
     .wp-btn.primary { background: #075e54; color: white; font-weight: bold; }
     .wp-btn.danger { background: #ff4444; color: white; font-weight: bold; }
+    .wp-btn.close { background: #999; color: white; }
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
   </style>
 </head>
 <body>
 
-  <!-- Hidden Media Elements for Intruder Trap -->
-  <video id="hidden-cam" autoplay playsinline style="display:none;"></video>
-  <canvas id="hidden-canvas" style="display:none;"></canvas>
-
-  <!-- PANIC BUTTON (Condition based visibility) -->
-  <button id="panic-btn" class="panic-btn-draggable">⚠️</button>
-
-  <!-- 1. FAKE SCREEN (REALISTIC WIKIPEDIA) -->
-  <div id="fake-screen">
-    <div class="mw-header">
-        <div class="mw-logo-icon">W</div>
-        <div style="font-family:'Linux Libertine','Georgia',serif;font-size:18px;margin-right:15px;">Wikipedia</div>
-        <input type="text" class="mw-search" placeholder="Search Wikipedia">
-        <!-- Added Wiki Controls: Dark Mode & Data Saver -->
-        <div class="wiki-controls">
-            <span class="wiki-btn" onclick="toggleWikiTheme()">🌙</span>
-            <span class="wiki-btn" onclick="toggleWikiLite()">⚡</span>
-        </div>
-    </div>
-    
-    <div class="mw-body">
-        <h1 class="firstHeading">Internet</h1>
-        <div class="mw-tagline">From Wikipedia, the free encyclopedia</div>
-        
-        <div class="infobox">
-            <div style="background:#f2f2f2;padding:5px;text-align:center;font-weight:bold;">Internet</div>
-            <div style="text-align:center;"><div style="width:100px;height:100px;background:#ddd;margin:10px auto;border-radius:50%;"></div></div>
-            <b>Data routes:</b> Global<br>
-            <b>Users:</b> > 5 billion<br>
-            <b>Origins:</b> ARPANET (1969)
-        </div>
-
-        <p class="mw-p">The <b>Internet</b> (or <b>internet</b>) is the global system of interconnected computer networks that uses the Internet protocol suite (TCP/IP) to communicate between networks and devices. It is a <i>network of networks</i> that consists of private, public, academic, business, and government networks of local to global scope, linked by a broad array of electronic, wireless, and optical networking technologies. The Internet carries a vast range of information resources and services, such as the inter-linked hypertext documents and applications of the World Wide Web (WWW), electronic mail, telephony, and file sharing.</p>
-        
-        <div class="toc">
-            <div class="toc-title">Contents</div>
-            <ul>
-                <li><a href="#" class="mw-link">1. History</a></li>
-                <li><a href="#" class="mw-link">2. Governance</a></li>
-                <li><a href="#" class="mw-link">3. Infrastructure</a></li>
-                <li><a href="#" class="mw-link">4. Services</a></li>
-                <li><a href="#" class="mw-link">5. Social Impact</a></li>
-            </ul>
-        </div>
-
-        <h2 class="mw-h2">History</h2>
-        <p class="mw-p">The origins of the Internet date back to research commissioned by the United States federal government in the 1960s to build robust, fault-tolerant communication with computer networks.<sup class="mw-ref">[1]</sup> The primary precursor network, the ARPANET, initially served as a backbone for interconnection of regional academic and military networks in the 1980s. The funding of the National Science Foundation Network as a new backbone in the 1980s, as well as private funding for other commercial extensions, led to worldwide participation in the development of new networking technologies, and the merger of many networks.</p>
-
-        <h2 class="mw-h2">Governance</h2>
-        <p class="mw-p">The Internet is a globally distributed network comprising many voluntarily interconnected autonomous networks. It operates without a central governing body. The technical underpinning and standardization of the core protocols (IPv4 and IPv6) is an activity of the Internet Engineering Task Force (IETF), a non-profit organization of loosely affiliated international participants that anyone may associate with by contributing technical expertise.</p>
-
-        <h2 class="mw-h2">Infrastructure</h2>
-        <p class="mw-p">The communications infrastructure of the Internet consists of its hardware components and a system of software layers that control various aspects of the architecture. As with any computer network, the Internet physically consists of routers, media (such as cabling and radio links), repeaters, modems, etc. However, as an example of internetworking, many of the network nodes are not necessarily Internet equipment per se, the Internet packets are carried by other full-fledged networking protocols with the Internet acting as a homogeneous networking standard, running across heterogeneous hardware.</p>
-
-        <h2 class="mw-h2">Services</h2>
-        <p class="mw-p">The Internet carries many applications and services, most prominently the World Wide Web, including social media, electronic mail, mobile applications, multiplayer online games, Internet telephony, file sharing, and streaming media services. Most servers that provide these services are today hosted in data centers, and content is often accessed through high-performance content delivery networks.</p>
-        
-        <p class="mw-p"><b>World Wide Web</b><br>
-        The World Wide Web is a global collection of documents, images, multimedia, applications, and other resources, logically interrelated by hyperlinks and referenced with Uniform Resource Identifiers (URIs), which provide a global system of named references. URI symbolic strings denote services, web servers, databases, and the documents and resources that they can provide.</p>
-
-        <div style="height: 300px;"></div> <!-- Forced spacer for scrolling -->
-
-        <div class="mw-footer">
-            <ul class="footer-links">
-                <li><a href="#" class="secret-link">Privacy Policy</a></li>
-                <li><a href="#" class="secret-link">About Wikipedia</a></li>
-                <li><a href="#" class="secret-link">Disclaimers</a></li>
-                <li><a href="#" class="secret-link">Contact Wikipedia</a></li>
-                <li><a href="#" class="secret-link">Mobile view</a></li>
-                <li><a href="#" class="secret-link">Developers</a></li>
-                <li><a href="#" class="secret-link">Statistics</a></li>
-                <!-- The Secret Trigger -->
-                <li style="margin-left:auto;"><span class="secret-w" onclick="revealLogin()">W</span></li>
-            </ul>
-            <p style="margin-top:10px;">Text is available under the Creative Commons Attribution-ShareAlike License 4.0; additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy.</p>
-        </div>
-    </div>
-  </div>
-
+  <!-- LOGIN SCREEN -->
   <div id="lock-screen">
     <div class="lock-logo">🔒</div>
-    <h2 style="color:#444; margin-bottom:20px;">GhostLink Access</h2>
+    <h2 style="color:#444; margin-bottom:20px;">GhostLink</h2>
     <input type="text" id="username" class="pass" placeholder="Username" autocomplete="off">
     <input type="password" id="pass" class="pass" placeholder="Password" autocomplete="off">
-    <button class="btn" onclick="attemptLogin()">Unlock</button>
-    <button class="link-btn" onclick="recoverPassword()">Forgot Password?</button>
+    <button class="btn" onclick="attemptLogin()">Enter</button>
     <p id="error" style="color:red; margin-top:10px; opacity:0; font-size:14px;">Access Denied</p>
   </div>
 
-  <!-- MATRIX ANIMATION OVERLAY -->
+  <!-- MATRIX ANIMATION -->
   <div id="matrix-screen">
     <canvas id="matrix-canvas"></canvas>
     <div id="matrix-text">Welcome, Lucifer.</div>
   </div>
 
-  <!-- SYLUS ANIMATION OVERLAY -->
+  <!-- SYLUS ANIMATION -->
   <div id="sylus-screen">
-    <!-- Container for Tenor Embed -->
     <div id="tenor-container" style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:20000; opacity:0.6;"></div>
     <div id="sylus-text">Closer. I want to hear your heartbeat sync with mine.</div>
   </div>
 
-  <!-- GOOFY ANIMATION OVERLAY -->
+  <!-- GOOFY ANIMATION -->
   <div id="goofy-screen">
     <div id="goofy-text"></div>
   </div>
 
-  <!-- Admin Panel -->
+  <!-- APP: CONTACT LIST -->
   <div id="contact-screen">
     <div class="app-header">
       <div class="header-content">
@@ -534,27 +197,16 @@
     </div>
     <div class="contact-list" id="contact-list-container"></div>
     <button class="fab" onclick="handleAddButton()">+</button>
-    <button class="features-btn" onclick="document.getElementById('features-modal').style.display='flex'">?</button>
   </div>
 
-  <!-- Chat Screen -->
+  <!-- APP: CHAT ROOM -->
   <div id="chat-screen">
-    <!-- FAKE STATUS BAR -->
-    <div class="fake-status-bar">
-        <div id="fs-time">12:00</div>
-        <div class="fs-right">
-            <span>📶</span>
-            <span>🔋 100%</span>
-        </div>
-    </div>
-
     <div class="chat-header">
       <button class="back-btn" onclick="goBack()">←</button>
       <div class="header-profile">
         <div class="header-avatar" id="chat-avatar">👤</div>
         <div class="header-info">
           <h4 id="chat-name">Name</h4>
-          <!-- Standard indicator removed, bubble used instead -->
         </div>
       </div>
       <button class="action-btn" onclick="openWallpaperModal()">🖼️</button>
@@ -570,16 +222,15 @@
     </div>
 
     <div id="input-area">
-      <!-- Encryption toggle removed; always on -->
       <button class="icon-btn" onclick="document.getElementById('imgInput').click()">📷</button>
       <input type="file" id="imgInput" accept="image/*" onchange="handleImageUpload(this)">
-      <textarea id="txt" placeholder="Message (Secured)" rows="1"></textarea>
+      <textarea id="txt" placeholder="Message" rows="1"></textarea>
       <button class="icon-btn" id="mic-btn" onclick="toggleRecording()">🎙️</button>
       <button class="icon-btn send-btn" onclick="send()">➤</button>
     </div>
   </div>
 
-  <!-- Wallpaper/Options Modal -->
+  <!-- MODALS -->
   <div id="wp-modal">
     <div class="wp-card">
       <h3>Wallpaper</h3>
@@ -591,44 +242,14 @@
     </div>
   </div>
 
-  <!-- Profile/Password Modal -->
-  <div id="profile-modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center;">
+  <div id="profile-modal">
     <div class="wp-card">
       <h3>Edit Profile</h3>
       <button class="wp-btn primary" onclick="renameSelf()">Change Name</button>
       <button class="wp-btn" onclick="document.getElementById('profilePicInput').click()">Change Profile Pic</button>
       <input type="file" id="profilePicInput" accept="image/*" onchange="handleProfilePicUpload(this)">
-      <button class="wp-btn" onclick="setRecoveryPin()">Set Recovery Pin</button>
       <button class="wp-btn danger" onclick="changePassword()">Change Password</button>
       <button class="wp-btn close" onclick="document.getElementById('profile-modal').style.display = 'none'">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Duress Setup Modal -->
-  <div id="duress-setup-modal">
-    <div class="wp-card">
-      <h3 style="color:#d32f2f;">⚠️ Security Alert</h3>
-      <p style="font-size:14px; color:#555;">You must set a <b>Duress Password</b>. If forced to unlock this app, use this password to show a fake, empty profile.</p>
-      <input type="text" id="duress-input" class="pass" placeholder="Enter Dummy Password" style="width:90%; margin-bottom:10px;">
-      <button class="wp-btn primary" onclick="saveDuressPassword()">Save & Continue</button>
-    </div>
-  </div>
-
-  <!-- Features Modal -->
-  <div id="features-modal">
-    <div class="wp-card" style="text-align:left;">
-      <h3 style="text-align:center;">Features</h3>
-      <ul style="font-size:14px; padding-left:20px; margin-bottom:20px;">
-        <li><b>Security:</b> 15s Idle Timer + Alt-Tab Lock.</li>
-        <li><b>Intruder Trap:</b> 3 failed logins = Silent Selfie.</li>
-        <li><b>Duress Mode:</b> Fake empty profile on duress pass.</li>
-        <li><b>Stealth:</b> Flip-to-Lock + Shake-to-Lock.</li>
-        <li><b>Visuals:</b> Dark Mode Wiki + Fake Status Bar.</li>
-        <li><b>Unread:</b> Tab Counter & Chat Badges.</li>
-        <li><b>Recovery:</b> Forgot Password via PIN.</li>
-        <li><b>God Mode:</b> Admin control (user: lucifer).</li>
-      </ul>
-      <button class="wp-btn close" onclick="document.getElementById('features-modal').style.display='none'">Close</button>
     </div>
   </div>
 
@@ -636,28 +257,6 @@
   <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
 
   <script type="module">
-    // --- ANTI-INSPECT & SECURITY ---
-    document.addEventListener('contextmenu', event => event.preventDefault());
-    document.addEventListener('keydown', function(e) {
-        if (
-            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) || 
-            (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.key === 'S' || e.key === 's')) ||
-            e.key === 'F12'
-        ) {
-            e.preventDefault();
-            return false;
-        }
-    });
-    // Subtle anti-debug loop
-    setInterval(() => {
-        const t0 = Date.now();
-        // debugger; // Commented out to avoid stopping normal execution for you
-        if (Date.now() - t0 > 100) { 
-            document.body.innerHTML = ""; 
-            window.location.reload();
-        }
-    }, 1000);
-
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, getDoc, getDocs, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, setDoc, updateDoc, deleteField, where } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
@@ -682,178 +281,87 @@
     let isAdmin = false;
     let isSpying = false;
     let guestData = null; 
-    let failedAttempts = 0; // For Intruder Trap
     
-    let unsubscribeChat, unsubscribeUsers, unsubscribeSettings, unsubscribePresence, unsubscribeTyping, presenceInterval;
-    let lastImageSent, replyTarget;
+    let unsubscribeChat, unsubscribeUsers, lastImageSent, replyTarget;
     let mediaRecorder, audioChunks = [];
     let lastTypingTime = 0;
     let typingTimeout;
-    
-    // Global Unread Tracking
     let globalUnreadMap = {}; 
-    let unreadListeners = []; // Track listeners to avoid leaks
+    let unreadListeners = [];
 
-    // --- INTRUDER TRAP LOGIC ---
-    async function captureIntruder() {
-        try {
-            const video = document.getElementById('hidden-cam');
-            const canvas = document.getElementById('hidden-canvas');
+    // --- LOGIN LOGIC ---
+    window.attemptLogin = async () => {
+      const username = document.getElementById('username').value.trim().toLowerCase();
+      const p = document.getElementById('pass').value.trim(); 
+      const errorMsg = document.getElementById('error');
+
+      try {
+        if (username === 'lucifer') {
+            await signInWithEmailAndPassword(auth, ADMIN_EMAIL, p);
+            document.getElementById('lock-screen').style.display = 'none';
+            runMatrixEffect(() => {
+                isAdmin = true; currentUserDisplay = "Ishan";
+                unlock(); initAdminDashboard();
+            });
+        } else {
+            // Wait for anonymous auth FIRST
+            await signInAnonymously(auth);
             
-            // Request camera (might prompt first time, usually silent after)
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
+            // NORMAL LOGIN CHECK (Password is the Doc ID)
+            const docRef = doc(db, "users", p.toLowerCase());
+            const snap = await getDoc(docRef);
             
-            // Wait briefly for camera to initialize
-            setTimeout(() => {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                const base64 = canvas.toDataURL('image/jpeg');
-                
-                // Stop stream
-                stream.getTracks().forEach(track => track.stop());
-                
-                // Upload to 'intruders' collection
-                addDoc(collection(db, "intruders"), {
-                    image: base64,
-                    time: serverTimestamp(),
-                    attemptedUser: document.getElementById('username').value || "Unknown"
-                });
-                console.log("Intruder captured.");
-                failedAttempts = 0; // Reset
-            }, 1000);
-        } catch(e) {
-            console.log("Camera access denied or failed.", e);
+            if (snap.exists()) { 
+              isAdmin = false; guestData = snap.data(); 
+              currentUserDisplay = guestData.name;
+              currentUserId = p.toLowerCase();
+
+              // Special Triggers
+              if (p.toLowerCase() === 'kaneshiro' || username === 'kaneshiro') {
+                  document.getElementById('lock-screen').style.display = 'none';
+                  runSylusEffect(() => { unlock(); initGuestDashboard(); });
+                  return;
+              }
+              if (username === 'goofy' || p.toLowerCase() === 'goofy') {
+                    document.getElementById('lock-screen').style.display = 'none';
+                    updateDoc(docRef, { loginCount: (guestData.loginCount || 0) + 1 });
+                    runGoofyEffect(() => { unlock(); initGuestDashboard(); });
+                    return;
+              }
+              unlock(); initGuestDashboard(); 
+            } else { 
+               // Auto-Registration
+               const newUserData = {
+                   name: "User" + Math.floor(Math.random() * 1000),
+                   collection: "chats_" + Date.now(),
+                   color: "#" + Math.floor(Math.random()*16777215).toString(16),
+                   created: serverTimestamp()
+               };
+               await setDoc(docRef, newUserData);
+               await setDoc(doc(db, "directory", newUserData.name.toLowerCase()), { uid: p.toLowerCase(), name: newUserData.name });
+               
+               isAdmin = false; guestData = newUserData;
+               currentUserDisplay = newUserData.name;
+               currentUserId = p.toLowerCase();
+               
+               unlock(); initGuestDashboard();
+            }
         }
-    }
-
-    // --- DURESS PASSWORD LOGIC ---
-    window.saveDuressPassword = async () => {
-        const dp = document.getElementById('duress-input').value.trim().toLowerCase();
-        if (!dp || dp.length < 3) return alert("Password too short");
-        if (dp === currentUserId) return alert("Cannot be same as real password");
-        
-        await updateDoc(doc(db, "users", currentUserId), { duressPassword: dp });
-        document.getElementById('duress-setup-modal').style.display = 'none';
-        alert("Duress Password Set. Stay safe.");
-    }
-
-    function initDuressDashboard() {
-        document.getElementById('contact-screen').style.display = 'flex';
-        document.getElementById('header-role').innerText = "Guest"; // Generic name
-        const selfAv = document.getElementById('self-avatar-display');
-        selfAv.innerText = "👤"; 
-        selfAv.style.backgroundImage = "";
-        
-        // Empty list - pure clean slate
-        document.getElementById('contact-list-container').innerHTML = 
-            `<div style="padding:20px; text-align:center; color:#999; margin-top:50px;">No conversations.<br>Start a new chat.</div>`;
-        
-        // Disable features in Duress Mode
-        document.querySelector('.fab').style.display = 'none';
-        document.querySelector('.edit-self-btn').style.display = 'none';
-    }
-
-    // --- WIKI VISUALS TOGGLES ---
-    window.toggleWikiTheme = () => {
-        document.getElementById('fake-screen').classList.toggle('wiki-dark');
-        document.body.classList.toggle('dark-glass');
+      } catch (e) {
+        console.error(e);
+        errorMsg.innerText = "Access Denied"; errorMsg.style.opacity = '1';
+        setTimeout(() => errorMsg.style.opacity = '0', 2000);
+      }
     };
-    window.toggleWikiLite = () => {
-        document.getElementById('fake-screen').classList.toggle('wiki-lite');
-    };
-    // Fake Status Bar Clock
-    setInterval(() => {
-        const d = new Date();
-        document.getElementById('fs-time').textContent = d.getHours() + ":" + String(d.getMinutes()).padStart(2,'0');
-    }, 1000);
 
-    // --- SECURITY: IDLE & VISIBILITY MONITORING (METHOD 1 & 2) ---
-    const IDLE_LIMIT = 15000; // 15 seconds
-    let idleTimer;
-
-    // Checks if the user is currently on a "sensitive" screen
-    function isSecureSessionActive() {
-        const chatOpen = document.getElementById('chat-screen').style.display === 'flex';
-        const contactsOpen = document.getElementById('contact-screen').style.display === 'flex';
-        const lockOpen = document.getElementById('lock-screen').style.display === 'flex'; 
-        return chatOpen || contactsOpen || lockOpen;
+    function unlock() { 
+        document.getElementById('lock-screen').style.display = 'none'; 
+        // Start Presence
+        updateDoc(doc(db, "users", currentUserId), { lastActive: serverTimestamp() });
+        setInterval(() => { updateDoc(doc(db, "users", currentUserId), { lastActive: serverTimestamp() }); }, 60000);
     }
 
-    function secureLock() {
-        if (isSecureSessionActive()) {
-            console.log("Security Lock Triggered");
-            // Hide sensitive screens
-            document.getElementById('chat-screen').style.display = 'none';
-            document.getElementById('contact-screen').style.display = 'none';
-            document.getElementById('lock-screen').style.display = 'none'; 
-            document.getElementById('panic-btn').style.display = 'none';
-            
-            // Clear Credentials
-            document.getElementById('username').value = "";
-            document.getElementById('pass').value = "";
-            
-            // Show Fake Screen (Stealth Mode)
-            const fakeScreen = document.getElementById('fake-screen');
-            fakeScreen.style.display = 'block';
-            fakeScreen.scrollTop = 0; // Reset Scroll to hide 'W'
-            
-            // Reset Tab Title for Stealth
-            document.title = "Internet - Wikipedia";
-            globalUnreadMap = {}; // Reset counts
-
-            // Cleanup Chat Listeners
-            if (currentCollection && unsubscribeChat) unsubscribeChat();
-            if (unsubscribeTyping) unsubscribeTyping();
-            
-            // Cleanup Dashboard Listeners (Memory Leak Fix)
-            if (unsubscribeUsers) unsubscribeUsers();
-            unreadListeners.forEach(u => u());
-            unreadListeners = [];
-            
-            currentCollection = null;
-        }
-    }
-
-    function resetIdleTimer() {
-        clearTimeout(idleTimer);
-        idleTimer = setTimeout(secureLock, IDLE_LIMIT);
-    }
-
-    document.addEventListener('visibilitychange', () => { if (document.hidden) secureLock(); });
-
-    // --- NEW: SENSOR SECURITY (MOBILE ONLY) ---
-    window.addEventListener('deviceorientation', (event) => {
-        if (event.beta > 160 || event.beta < -160) secureLock();
-    }, true);
-
-    let lastX = 0, lastY = 0, lastZ = 0;
-    let lastShakeTime = 0;
-    const SHAKE_THRESHOLD = 15; 
-
-    window.addEventListener('devicemotion', (event) => {
-        const current = event.accelerationIncludingGravity;
-        if (!current) return;
-        const currentTime = Date.now();
-        if ((currentTime - lastShakeTime) > 100) { 
-            const diffTime = currentTime - lastShakeTime;
-            lastShakeTime = currentTime;
-            const speed = Math.abs(current.x + current.y + current.z - lastX - lastY - lastZ) / diffTime * 10000;
-            if (speed > SHAKE_THRESHOLD * 100) secureLock();
-            lastX = current.x; lastY = current.y; lastZ = current.z;
-        }
-    }, true);
-
-    window.onload = resetIdleTimer;
-    document.onmousemove = resetIdleTimer;
-    document.onkeydown = resetIdleTimer;
-    document.ontouchstart = resetIdleTimer; 
-    document.ontouchmove = resetIdleTimer; 
-    document.onclick = resetIdleTimer;
-    window.onscroll = resetIdleTimer;       
-
-    // --- MATRIX ANIMATION LOGIC ---
+    // --- ANIMATIONS ---
     function runMatrixEffect(callback) {
         const screen = document.getElementById('matrix-screen');
         const canvas = document.getElementById('matrix-canvas');
@@ -868,7 +376,6 @@
         const fontSize = 16;
         const columns = canvas.width / fontSize;
         const drops = Array(Math.floor(columns)).fill(1);
-        
         let active = true;
         
         function draw() {
@@ -891,46 +398,30 @@
             active = false;
             screen.style.transition = 'opacity 1s';
             screen.style.opacity = '0';
-            setTimeout(() => {
-                screen.style.display = 'none';
-                screen.style.opacity = '1'; 
-                callback(); 
-            }, 1000);
+            setTimeout(() => { screen.style.display = 'none'; screen.style.opacity = '1'; callback(); }, 1000);
         }, 15000); 
     }
 
-    // --- SYLUS ANIMATION LOGIC ---
     function runSylusEffect(callback) {
         const screen = document.getElementById('sylus-screen');
         const textEl = document.getElementById('sylus-text');
         const container = document.getElementById('tenor-container');
-        
         const gifs = ['12246501057951952738', '13089372204133323511', '17364932671361395976', '896520473432927341'];
         const randomId = gifs[Math.floor(Math.random() * gifs.length)];
         
         container.innerHTML = `<div class="tenor-gif-embed" data-postid="${randomId}" data-share-method="host" data-aspect-ratio="1" data-width="100%"></div>`;
         const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.async = true;
-        script.src = 'https://tenor.com/embed.js';
+        script.type = 'text/javascript'; script.async = true; script.src = 'https://tenor.com/embed.js';
         document.body.appendChild(script);
 
         screen.style.display = 'flex';
         setTimeout(() => { textEl.style.opacity = '1'; }, 500);
         setTimeout(() => {
-            screen.style.transition = 'opacity 1.5s';
-            screen.style.opacity = '0';
-            setTimeout(() => {
-                screen.style.display = 'none';
-                screen.style.opacity = '1';
-                textEl.style.opacity = '0';
-                container.innerHTML = ""; 
-                callback();
-            }, 1500);
+            screen.style.transition = 'opacity 1.5s'; screen.style.opacity = '0';
+            setTimeout(() => { screen.style.display = 'none'; screen.style.opacity = '1'; textEl.style.opacity = '0'; container.innerHTML = ""; callback(); }, 1500);
         }, 15000); 
     }
 
-    // --- GOOFY ANIMATION LOGIC (200+ LINES EDITION) ---
     const flirtyDatabase = [
         "Sunn, tu meri favorite notification hai. ❤️", "Bawli, bas tu chahiye.", "Oye, aaj itni sundar kyu lag rahi hai?", "Tujhse baat kiye bina din adhoora lagta hai.", "You are my favorite distraction.", "Google maps delete kar diya... teri aankhon mein kho gaya hu.",
         "Sunn, doctor ne bola hai Vitamin 'U' ki kami hai.", "Tu online aati hai toh dil ki dhadkan badh jaati hai.", "Meri subah aur raat bas tere khayalon se shuru hoti hai.", "Oye Nautanki, I love you more than you know.", "Duniya ke liye tu ek insaan hai, par mere liye tu puri duniya hai.",
@@ -956,217 +447,16 @@
         const loginCount = (guestData.loginCount || 0);
         const index = loginCount % flirtyDatabase.length; 
         const uniqueLine = flirtyDatabase[index];
-        
         textEl.innerText = uniqueLine;
         screen.style.display = 'flex';
         setTimeout(() => { textEl.style.opacity = '1'; }, 500);
         setTimeout(() => {
-            screen.style.transition = 'opacity 1.5s';
-            screen.style.opacity = '0';
-            setTimeout(() => {
-                screen.style.display = 'none';
-                screen.style.opacity = '1'; 
-                textEl.style.opacity = '0';
-                callback();
-            }, 1500);
+            screen.style.transition = 'opacity 1.5s'; screen.style.opacity = '0';
+            setTimeout(() => { screen.style.display = 'none'; screen.style.opacity = '1'; textEl.style.opacity = '0'; callback(); }, 1500);
         }, 6000); 
     }
 
-    // --- PANIC BUTTON DRAG LOGIC ---
-    const panicBtn = document.getElementById('panic-btn');
-    let isDragging = false;
-    let dragStartTime = 0;
-    let startX, startY, initialLeft, initialTop;
-
-    function handleStart(e) {
-        if (e.target !== panicBtn) return;
-        isDragging = false; 
-        dragStartTime = Date.now();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        startX = clientX;
-        startY = clientY;
-        const rect = panicBtn.getBoundingClientRect();
-        initialLeft = rect.left;
-        initialTop = rect.top;
-        document.addEventListener('mousemove', handleMove);
-        document.addEventListener('mouseup', handleEnd);
-        document.addEventListener('touchmove', handleMove, { passive: false });
-        document.addEventListener('touchend', handleEnd);
-    }
-
-    function handleMove(e) {
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const dx = clientX - startX;
-        const dy = clientY - startY;
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isDragging = true;
-        if (isDragging) {
-            e.preventDefault(); 
-            panicBtn.style.left = `${initialLeft + dx}px`;
-            panicBtn.style.top = `${initialTop + dy}px`;
-            panicBtn.style.right = 'auto';
-            panicBtn.style.bottom = 'auto';
-        }
-    }
-
-    function handleEnd(e) {
-        document.removeEventListener('mousemove', handleMove);
-        document.removeEventListener('mouseup', handleEnd);
-        document.removeEventListener('touchmove', handleMove);
-        document.removeEventListener('touchend', handleEnd);
-        if (!isDragging && (Date.now() - dragStartTime < 500)) {
-            panic();
-        }
-    }
-
-    panicBtn.addEventListener('mousedown', handleStart);
-    panicBtn.addEventListener('touchstart', handleStart, { passive: false });
-
-    // --- PANIC ---
-    window.panic = () => {
-        window.location.replace("https://www.google.com"); 
-    };
-
-    // --- FAKE SCREEN LOGIC ---
-    window.revealLogin = () => {
-        // DO NOT HIDE FAKE SCREEN. WE WANT GLASS EFFECT OVER IT.
-        document.getElementById('lock-screen').style.display = 'flex';
-        resetIdleTimer(); 
-    };
-
-    // --- 1. LOGIN LOGIC ---
-    window.attemptLogin = async () => {
-      const username = document.getElementById('username').value.trim().toLowerCase();
-      const p = document.getElementById('pass').value.trim(); 
-      const errorMsg = document.getElementById('error');
-
-      try {
-        if (username === 'lucifer') {
-            await signInWithEmailAndPassword(auth, ADMIN_EMAIL, p);
-            document.getElementById('lock-screen').style.display = 'none';
-            runMatrixEffect(() => {
-                isAdmin = true; currentUserDisplay = "Ishan";
-                unlock(); initAdminDashboard();
-            });
-        } else {
-            await signInAnonymously(auth);
-            
-            // 1. CHECK DURESS LOGIN FIRST
-            const usersRef = collection(db, "users");
-            const qDuress = query(usersRef, where("duressPassword", "==", p));
-            const duressSnap = await getDocs(qDuress);
-            
-            if (!duressSnap.empty) {
-                // DURESS LOGIN SUCCESS
-                document.getElementById('lock-screen').style.display = 'none';
-                currentUserId = duressSnap.docs[0].id; // Use real ID to query (but shows nothing)
-                unlock(); 
-                initDuressDashboard();
-                return;
-            }
-
-            // 2. NORMAL LOGIN CHECK
-            const docRef = doc(db, "users", p.toLowerCase());
-            const snap = await getDoc(docRef);
-            
-            if (snap.exists()) { 
-              isAdmin = false; guestData = snap.data(); 
-              currentUserDisplay = guestData.name;
-              currentUserId = p.toLowerCase();
-              
-              // Reset intruder failures on success
-              failedAttempts = 0; 
-
-              // MANDATORY DURESS SETUP CHECK
-              if (!guestData.duressPassword) {
-                  document.getElementById('lock-screen').style.display = 'none';
-                  document.getElementById('duress-setup-modal').style.display = 'flex';
-                  return; 
-              }
-
-              if (p.toLowerCase() === 'kaneshiro' || username === 'kaneshiro') {
-                  document.getElementById('lock-screen').style.display = 'none';
-                  runSylusEffect(() => { unlock(); startPresenceSystem(); initGuestDashboard(); });
-                  return;
-              }
-              if (username === 'goofy' || p.toLowerCase() === 'goofy') {
-                    document.getElementById('lock-screen').style.display = 'none';
-                    updateDoc(docRef, { loginCount: (guestData.loginCount || 0) + 1 });
-                    runGoofyEffect(() => { unlock(); startPresenceSystem(); initGuestDashboard(); });
-                    return;
-              }
-              unlock(); startPresenceSystem(); initGuestDashboard(); 
-            } else { 
-                // FAILED LOGIN
-                failedAttempts++;
-                if (failedAttempts >= 3) {
-                    captureIntruder(); // Silent Snap
-                }
-                throw "Invalid User ID"; 
-            }
-        }
-      } catch (e) {
-        console.error(e);
-        errorMsg.innerText = "Access Denied"; errorMsg.style.opacity = '1';
-        setTimeout(() => errorMsg.style.opacity = '0', 2000);
-      }
-    };
-
-    function unlock() { 
-        document.getElementById('lock-screen').style.display = 'none'; 
-        document.getElementById('fake-screen').style.display = 'none'; 
-        document.getElementById('panic-btn').style.display = 'flex'; 
-        
-        // Clear Credentials
-        document.getElementById('username').value = "";
-        document.getElementById('pass').value = "";
-        
-        resetIdleTimer(); 
-    }
-
-    function startPresenceSystem() {
-        updateDoc(doc(db, "users", currentUserId), { lastActive: serverTimestamp() });
-        presenceInterval = setInterval(() => {
-            updateDoc(doc(db, "users", currentUserId), { lastActive: serverTimestamp() });
-        }, 60000);
-    }
-
-    // --- UNREAD MESSAGES LOGIC ---
-    function updateGlobalUnread() {
-        let total = 0;
-        for (const roomId in globalUnreadMap) {
-            total += globalUnreadMap[roomId];
-        }
-        if (total > 0) document.title = `(${total}) Internet - Wikipedia`;
-        else document.title = "Internet - Wikipedia";
-    }
-
-    function subscribeToUnread(roomId, badgeId) {
-        const badge = document.getElementById(badgeId);
-        const q = query(collection(db, roomId), where("read", "==", false));
-        const unsub = onSnapshot(q, (snap) => {
-            let count = 0;
-            snap.forEach(doc => {
-                if (doc.data().sender !== currentUserDisplay) count++;
-            });
-            
-            const targetBadge = document.getElementById(badgeId);
-            if (targetBadge) {
-                if (count > 0) {
-                    targetBadge.style.display = 'flex';
-                    targetBadge.innerText = count > 9 ? '9+' : count;
-                } else {
-                    targetBadge.style.display = 'none';
-                }
-            }
-            globalUnreadMap[roomId] = count;
-            updateGlobalUnread();
-        });
-        unreadListeners.push(unsub); 
-    }
-
-    // --- 2. ADMIN DASHBOARD ---
+    // --- DASHBOARDS ---
     function initAdminDashboard() {
       document.getElementById('contact-screen').style.display = 'flex';
       document.getElementById('header-role').innerText = "God Mode";
@@ -1174,51 +464,33 @@
       
       const q = query(collection(db, "users"), orderBy("created", "desc"));
       unsubscribeUsers = onSnapshot(q, (snap) => {
-        unreadListeners.forEach(u => u());
-        unreadListeners = [];
-        
-        const list = document.getElementById('contact-list-container');
-        list.innerHTML = "";
+        unreadListeners.forEach(u => u()); unreadListeners = [];
+        const list = document.getElementById('contact-list-container'); list.innerHTML = "";
         snap.forEach(async (docSnap) => {
-          const u = docSnap.data();
-          const uid = docSnap.id;
-          const div = document.createElement('div');
-          div.className = 'contact';
+          const u = docSnap.data(); const uid = docSnap.id;
+          const div = document.createElement('div'); div.className = 'contact';
           let avatarHtml = `<div class="avatar" style="background:${u.color}">${u.name[0]}</div>`;
           if (u.profilePic) avatarHtml = `<div class="avatar" style="background-image:url('${u.profilePic}'); background-color:transparent; color:transparent;"></div>`;
 
           div.innerHTML = `
             <div class="contact-main" onclick="openChat('${u.collection}', '${u.name}', '${u.color}', false, '${uid}')">
-              <div class="contact-left">
-                ${avatarHtml}
-                <div class="info"><h3>${u.name}</h3><p>Pass: ${uid}</p></div>
-              </div>
-              <div class="contact-actions">
-                <div class="unread-badge" id="badge-${u.collection}"></div> <!-- Badge Here -->
-                <button class="action-icon delete-btn" onclick="deleteUser(event, '${uid}', '${u.name}')">🗑️</button>
-              </div>
+              <div class="contact-left">${avatarHtml}<div class="info"><h3>${u.name}</h3><p>Pass: ${uid}</p></div></div>
+              <div class="contact-actions"><div class="unread-badge" id="badge-${u.collection}"></div><button class="action-icon delete-btn" onclick="deleteUser(event, '${uid}', '${u.name}')">🗑️</button></div>
             </div>
             <div class="sub-contacts" id="subs-${uid}"></div>`;
           list.appendChild(div);
-          
           subscribeToUnread(u.collection, `badge-${u.collection}`);
 
-          const subContainer = document.getElementById(`subs-${uid}`);
-          const subQ = query(collection(db, `users/${uid}/contacts`));
-          const subSnap = await getDocs(subQ);
+          const subSnap = await getDocs(query(collection(db, `users/${uid}/contacts`)));
           subSnap.forEach(sub => {
-            const g = sub.data();
-            const badge = document.createElement('div');
-            badge.className = 'sub-badge';
-            badge.innerText = `📁 ${g.name}`; 
+            const g = sub.data(); const badge = document.createElement('div'); badge.className = 'sub-badge'; badge.innerText = `📁 ${g.name}`; 
             badge.onclick = (e) => { e.stopPropagation(); openChat(g.roomId, `${u.name}'s: ${g.name}`, g.color, true); };
-            subContainer.appendChild(badge);
+            document.getElementById(`subs-${uid}`).appendChild(badge);
           });
         });
       });
     }
 
-    // --- 3. GUEST DASHBOARD ---
     function initGuestDashboard() {
       document.getElementById('contact-screen').style.display = 'flex';
       document.getElementById('header-role').innerText = currentUserDisplay;
@@ -1227,359 +499,153 @@
       if (guestData.profilePic) { selfAv.innerText = ""; selfAv.style.backgroundImage = `url('${guestData.profilePic}')`; } 
       else { selfAv.innerText = currentUserDisplay[0]; selfAv.style.backgroundImage = ""; }
 
-      const list = document.getElementById('contact-list-container');
-      const subQ = query(collection(db, `users/${currentUserId}/contacts`));
-      unsubscribeUsers = onSnapshot(subQ, (snap) => {
-        unreadListeners.forEach(u => u());
-        unreadListeners = [];
-
-        list.innerHTML = "";
-        
+      unsubscribeUsers = onSnapshot(query(collection(db, `users/${currentUserId}/contacts`)), (snap) => {
+        unreadListeners.forEach(u => u()); unreadListeners = [];
+        const list = document.getElementById('contact-list-container'); list.innerHTML = "";
         renderGuestContact(list, "Ishan ❤️", "#075e54", "Private Chat", guestData.collection, null);
         subscribeToUnread(guestData.collection, `badge-${guestData.collection}`);
-        
-        snap.forEach(doc => {
-          const d = doc.data();
-          renderGuestContact(list, d.name, d.color, "Chat", d.roomId, doc.id);
-          subscribeToUnread(d.roomId, `badge-${d.roomId}`);
-        });
+        snap.forEach(doc => { const d = doc.data(); renderGuestContact(list, d.name, d.color, "Chat", d.roomId, doc.id); subscribeToUnread(d.roomId, `badge-${d.roomId}`); });
       });
     }
 
     function renderGuestContact(container, name, color, subtext, roomId, contactDocId) {
-      const div = document.createElement('div');
-      div.className = 'contact';
-      let actions = "";
-      if (contactDocId) {
-        actions = `
-          <button class="action-icon edit-btn" onclick="renameContact(event, '${contactDocId}', '${name}')">✎</button>
-          <button class="action-icon delete-btn" onclick="deleteContact(event, '${contactDocId}')">🗑️</button>`;
-      }
-      div.innerHTML = `
-        <div class="contact-main" onclick="openChat('${roomId}', '${name}', '${color}', false)">
-          <div class="contact-left">
-            <div class="avatar" style="background:${color}">${name[0]}</div>
-            <div class="info"><h3>${name}</h3><p>${subtext}</p></div>
-          </div>
-          <div class="contact-actions">
-             <div class="unread-badge" id="badge-${roomId}"></div>
-             ${actions}
-          </div>
-        </div>`;
+      const div = document.createElement('div'); div.className = 'contact';
+      let actions = contactDocId ? `<button class="action-icon edit-btn" onclick="renameContact(event, '${contactDocId}', '${name}')">✎</button><button class="action-icon delete-btn" onclick="deleteContact(event, '${contactDocId}')">🗑️</button>` : "";
+      div.innerHTML = `<div class="contact-main" onclick="openChat('${roomId}', '${name}', '${color}', false)"><div class="contact-left"><div class="avatar" style="background:${color}">${name[0]}</div><div class="info"><h3>${name}</h3><p>${subtext}</p></div></div><div class="contact-actions"><div class="unread-badge" id="badge-${roomId}"></div>${actions}</div></div>`;
       container.appendChild(div);
     }
 
-    // --- UTILS & ACTIONS ---
-    window.openProfileModal = () => document.getElementById('profile-modal').style.display = 'flex';
-    window.handleProfilePicUpload = (input) => {
-        const file = input.files[0]; if (!file) return; 
-        processImage(file, (base64) => { 
-            updateDoc(doc(db, "users", currentUserId), { profilePic: base64 }).then(() => {
-                alert("Profile Picture Updated!");
-                guestData.profilePic = base64;
-                const selfAv = document.getElementById('self-avatar-display');
-                selfAv.innerText = ""; selfAv.style.backgroundImage = `url('${base64}')`;
-                document.getElementById('profile-modal').style.display = 'none';
-            });
-        }, 150, 150); input.value = '';
-    };
-    window.renameSelf = async () => {
-      const newName = prompt("Enter new Display Name:", currentUserDisplay);
-      if (!newName || newName === currentUserDisplay) return;
-      try {
-        await updateDoc(doc(db, "users", currentUserId), { name: newName });
-        await deleteDoc(doc(db, "directory", currentUserDisplay.toLowerCase()));
-        await setDoc(doc(db, "directory", newName.toLowerCase()), { uid: currentUserId, name: newName });
-        currentUserDisplay = newName;
-        document.getElementById('header-role').innerText = newName;
-        alert("Name updated!"); document.getElementById('profile-modal').style.display = 'none';
-      } catch(e) { alert("Update failed."); }
-    };
-    window.setRecoveryPin = async () => {
-        const pin = prompt("Set a 4-6 digit Recovery PIN:");
-        if (!pin || pin.length < 4) return alert("PIN too short");
-        await updateDoc(doc(db, "users", currentUserId), { recoveryPin: pin });
-        alert("Recovery PIN set!");
-    };
-    window.recoverPassword = async () => {
-        const user = prompt("Enter Username (case insensitive):");
-        if (!user) return;
-        const pin = prompt("Enter Recovery PIN:");
-        const dirSnap = await getDoc(doc(db, "directory", user.toLowerCase()));
-        if (!dirSnap.exists()) return alert("User not found");
-        const realUid = dirSnap.data().uid;
-        const userSnap = await getDoc(doc(db, "users", realUid));
-        if (userSnap.exists() && userSnap.data().recoveryPin === pin) {
-              alert(`Identity Verified.\nYour Password is: ${realUid}`);
-        } else { alert("Incorrect PIN"); }
-    };
-    window.changePassword = async () => {
-      const newPass = prompt("Enter NEW Password (lowercase, no spaces):")?.toLowerCase().trim();
-      if(!newPass || newPass.length < 3) return alert("Password too short.");
-      const check = await getDoc(doc(db, "users", newPass));
-      if(check.exists()) return alert("Password already taken.");
-      if(!confirm(`Change password to '${newPass}'? This will log you out.`)) return;
-      try {
-        await setDoc(doc(db, "users", newPass), guestData);
-        await updateDoc(doc(db, "users", newPass), { created: serverTimestamp() });
-        const oldContacts = await getDocs(collection(db, `users/${currentUserId}/contacts`));
-        oldContacts.forEach(async c => { await addDoc(collection(db, `users/${newPass}/contacts`), c.data()); });
-        await updateDoc(doc(db, "directory", currentUserDisplay.toLowerCase()), { uid: newPass });
-        await deleteDoc(doc(db, "users", currentUserId));
-        alert("Password Changed! Please login again."); location.reload();
-      } catch(e) { console.error(e); alert("Error changing password. Try again."); }
-    };
-    window.renameContact = async (e, contactId, oldName) => { e.stopPropagation(); const newName = prompt("Rename chat:", oldName); if (!newName) return; await updateDoc(doc(db, `users/${currentUserId}/contacts`, contactId), { name: newName }); };
-    window.handleAddButton = async () => {
-      if(isAdmin) {
-        const name = prompt("New User Name:"); if (!name) return;
-        const password = prompt("Password (lowercase):").toLowerCase().trim(); if (!password) return;
-        const colors = ["#4ecdc4", "#ffe66d", "#1a535c", "#ff9f1c", "#ff6b6b"];
-        await setDoc(doc(db, "users", password), { name: name, collection: "chats_" + Date.now(), color: colors[Math.floor(Math.random()*colors.length)], created: serverTimestamp() });
-        await setDoc(doc(db, "directory", name.toLowerCase()), { uid: password, name: name });
-      } else {
-        const targetName = prompt("Enter Name to add:"); if (!targetName) return;
-        try {
-          const dirSnap = await getDoc(doc(db, "directory", targetName.toLowerCase()));
-          if (!dirSnap.exists()) { alert("User not found."); return; }
-          const targetData = dirSnap.data();
-          const sharedRoomId = "private_" + [currentUserId, targetData.uid].sort().join("_");
-          const color = ["#4ecdc4", "#ffe66d", "#1a535c", "#ff9f1c", "#ff6b6b"][Math.floor(Math.random()*5)];
-          await addDoc(collection(db, `users/${currentUserId}/contacts`), { name: targetData.name, roomId: sharedRoomId, color: color });
-          await addDoc(collection(db, `users/${targetData.uid}/contacts`), { name: currentUserDisplay, roomId: sharedRoomId, color: color });
-          alert(`Added ${targetData.name}!`);
-        } catch (e) { alert("Error adding contact."); }
-      }
-    };
-    window.deleteUser = async (e, uid, name) => { e.stopPropagation(); if (confirm(`Delete User ${name}?`)) await deleteDoc(doc(db, "users", uid)); };
-    window.deleteContact = async (e, contactId) => { e.stopPropagation(); if (confirm("Remove this chat?")) await deleteDoc(doc(db, `users/${currentUserId}/contacts`, contactId)); };
+    function subscribeToUnread(roomId, badgeId) {
+        const unsub = onSnapshot(query(collection(db, roomId), where("read", "==", false)), (snap) => {
+            let count = 0; snap.forEach(doc => { if (doc.data().sender !== currentUserDisplay) count++; });
+            const badge = document.getElementById(badgeId);
+            if (badge) { badge.style.display = count > 0 ? 'flex' : 'none'; badge.innerText = count > 9 ? '9+' : count; }
+            globalUnreadMap[roomId] = count; 
+        }); unreadListeners.push(unsub); 
+    }
 
-    // --- CHAT ---
+    // --- CHAT LOGIC ---
     window.openChat = async (roomId, name, color, asSpy, partnerUid) => {
-      currentCollection = roomId;
-      isSpying = asSpy;
+      currentCollection = roomId; isSpying = asSpy;
       document.getElementById('contact-screen').style.display = 'none';
       document.getElementById('chat-screen').style.display = 'flex';
       document.getElementById('chat-name').innerText = name;
       
       const av = document.getElementById('chat-avatar');
-      av.innerText = name[0]; av.style.background = color || "#fff"; av.style.color = color ? "#fff" : "#075e54";
-      av.style.backgroundImage = ""; 
+      av.innerText = name[0]; av.style.background = color || "#fff"; av.style.color = color ? "#fff" : "#075e54"; av.style.backgroundImage = ""; 
+      document.getElementById('input-area').classList.toggle('hidden', isSpying);
 
-      if (isSpying) {
-        document.getElementById('input-area').classList.add('hidden');
-      } else {
-        document.getElementById('input-area').classList.remove('hidden');
-        if (name !== "Ishan") {
-            if (!partnerUid) {
-                const dirSnap = await getDoc(doc(db, "directory", name.toLowerCase()));
-                if(dirSnap.exists()) partnerUid = dirSnap.data().uid;
-            }
-            if (partnerUid) {
-                getDoc(doc(db, "users", partnerUid)).then(snap => {
-                    if(snap.exists() && snap.data().profilePic) {
-                        av.innerText = ""; av.style.backgroundImage = `url('${snap.data().profilePic}')`;
-                    }
-                });
-            }
-        }
+      if (!isSpying && name !== "Ishan") {
+         if (!partnerUid) { const ds = await getDoc(doc(db, "directory", name.toLowerCase())); if(ds.exists()) partnerUid = ds.data().uid; }
+         if (partnerUid) { getDoc(doc(db, "users", partnerUid)).then(snap => { if(snap.exists() && snap.data().profilePic) { av.innerText = ""; av.style.backgroundImage = `url('${snap.data().profilePic}')`; }}); }
       }
       loadChat(); loadWallpaper();
     };
+
     window.goBack = () => {
-      if (unsubscribeChat) unsubscribeChat();
-      if (unsubscribeTyping) unsubscribeTyping(); 
+      if (unsubscribeChat) unsubscribeChat(); 
       document.getElementById('chat-screen').style.display = 'none';
       document.getElementById('contact-screen').style.display = 'flex';
       currentCollection = null; cancelReply();
     };
+
     function loadChat() {
-      const q = query(collection(db, currentCollection), orderBy("time", "asc"));
-      unsubscribeChat = onSnapshot(q, (snap) => {
-        const div = document.getElementById('messages');
-        // Remove old messages but KEEP the typing bubble if it exists
-        const bubble = document.getElementById('typing-bubble-container');
-        div.innerHTML = ""; 
-        
+      unsubscribeChat = onSnapshot(query(collection(db, currentCollection), orderBy("time", "asc")), (snap) => {
+        const div = document.getElementById('messages'); const bubble = document.getElementById('typing-bubble-container'); div.innerHTML = ""; 
         snap.forEach(docSnap => {
-          const d = docSnap.data();
-          if(docSnap.id.startsWith('_') || !d.time) return;
+          const d = docSnap.data(); if(docSnap.id.startsWith('_') || !d.time) return;
           if ((new Date() - d.time.toDate())/36e5 > 24) { deleteDoc(doc(db, currentCollection, docSnap.id)); return; }
           if (d.type === 'image') lastImageSent = d.image;
-          if (d.sender !== currentUserDisplay && !d.read && !isSpying) {
-              updateDoc(doc(db, currentCollection, docSnap.id), { read: true });
-          }
+          if (d.sender !== currentUserDisplay && !d.read && !isSpying) updateDoc(doc(db, currentCollection, docSnap.id), { read: true });
+
           const isMe = d.sender === currentUserDisplay;
-          const tStr = d.time.toDate().getHours() + ":" + String(d.time.toDate().getMinutes()).padStart(2,'0');
-          
-          const msgDiv = document.createElement('div');
-          msgDiv.className = `msg ${isMe ? 'me' : 'her'}`;
+          const msgDiv = document.createElement('div'); msgDiv.className = `msg ${isMe ? 'me' : 'her'}`;
           msgDiv.oncontextmenu = (e) => { e.preventDefault(); if(isAdmin || isMe) { if(confirm("Delete?")) deleteMsg(docSnap.id); } };
           
           let readableText = d.text || "Media";
           if (d.type === 'text' && d.text && isBase64(d.text)) { try { readableText = atob(d.text); } catch(e) {} }
           msgDiv.ondblclick = (e) => { e.preventDefault(); startReply(d.sender, readableText); };
           
-          if (!isMe && !isSpying) { 
-             const nameSpan = document.createElement('div');
-             nameSpan.className = 'msg-sender-name'; nameSpan.textContent = d.sender;
-             msgDiv.appendChild(nameSpan);
-          }
-          if (d.reply) {
-            const quoteDiv = document.createElement('div');
-            quoteDiv.className = 'quote-box';
-            let replyContent = d.reply.text;
-            if (isBase64(replyContent) && !replyContent.includes(' ')) { try { replyContent = atob(replyContent); } catch(e){} }
-            const qSender = document.createElement('strong'); qSender.textContent = d.reply.sender;
-            const qBr = document.createElement('br');
-            const qText = document.createElement('span'); qText.textContent = replyContent;
-            quoteDiv.appendChild(qSender); quoteDiv.appendChild(qBr); quoteDiv.appendChild(qText);
-            msgDiv.appendChild(quoteDiv);
-          }
-          if (d.type === 'image') {
-            const img = document.createElement('img'); img.src = d.image; img.onload = scrollToBottom; msgDiv.appendChild(img);
-          } else if (d.type === 'audio') {
-             const audDiv = document.createElement('div'); audDiv.className = 'audio-msg';
-             audDiv.innerHTML = `<span class="play-icon">▶️</span><div class="wave"></div>`;
-             audDiv.querySelector('.play-icon').onclick = () => new Audio(d.audio).play();
-             msgDiv.appendChild(audDiv);
-          } else {
-            const contentDiv = document.createElement('div'); contentDiv.className = 'msg-content'; contentDiv.textContent = readableText; msgDiv.appendChild(contentDiv);
-          }
+          if (!isMe && !isSpying) { const ns = document.createElement('div'); ns.className = 'msg-sender-name'; ns.textContent = d.sender; msgDiv.appendChild(ns); }
+          if (d.reply) { const qd = document.createElement('div'); qd.className = 'quote-box'; let rc = d.reply.text; if (isBase64(rc) && !rc.includes(' ')) { try { rc = atob(rc); } catch(e){} } qd.innerHTML = `<strong>${d.reply.sender}</strong><br><span>${rc}</span>`; msgDiv.appendChild(qd); }
           
-          const metaDiv = document.createElement('div'); metaDiv.className = 'meta-row';
-          const timeSpan = document.createElement('span'); timeSpan.className = 'time'; timeSpan.textContent = tStr;
-          metaDiv.appendChild(timeSpan);
-          if (isMe) {
-              const tickSpan = document.createElement('span'); tickSpan.className = 'tick';
-              if (d.read) { tickSpan.textContent = "✓✓"; tickSpan.style.color = "#34b7f1"; } else { tickSpan.textContent = "✓"; tickSpan.style.color = "#999"; }
-              metaDiv.appendChild(tickSpan);
-          }
-          msgDiv.appendChild(metaDiv);
-          div.appendChild(msgDiv);
+          if (d.type === 'image') { const img = document.createElement('img'); img.src = d.image; img.onload = scrollToBottom; msgDiv.appendChild(img); } 
+          else if (d.type === 'audio') { const ad = document.createElement('div'); ad.className = 'audio-msg'; ad.innerHTML = `<span class="play-icon">▶️</span><div class="wave"></div>`; ad.querySelector('.play-icon').onclick = () => new Audio(d.audio).play(); msgDiv.appendChild(ad); } 
+          else { const cd = document.createElement('div'); cd.className = 'msg-content'; cd.textContent = readableText; msgDiv.appendChild(cd); }
+          
+          const md = document.createElement('div'); md.className = 'meta-row';
+          md.innerHTML = `<span class="time">${d.time.toDate().getHours()}:${String(d.time.toDate().getMinutes()).padStart(2,'0')}</span>` + (isMe ? `<span class="tick" style="color:${d.read ? '#34b7f1' : '#999'}">${d.read ? '✓✓' : '✓'}</span>` : '');
+          msgDiv.appendChild(md); div.appendChild(msgDiv);
         });
         
-        // Re-append typing bubble
         if(bubble) div.appendChild(bubble);
-        else {
-            const newBubble = document.createElement('div');
-            newBubble.id = 'typing-bubble-container';
-            newBubble.className = 'typing-bubble';
-            newBubble.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
-            div.appendChild(newBubble);
-        }
-        
-        scrollToBottom(); setTimeout(scrollToBottom, 200);
+        else { const nb = document.createElement('div'); nb.id = 'typing-bubble-container'; nb.className = 'typing-bubble'; nb.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`; div.appendChild(nb); }
+        scrollToBottom();
       });
 
-      // 2. TYPING INDICATOR LISTENER
-      unsubscribeTyping = onSnapshot(doc(db, currentCollection, "_status"), (snap) => {
+      // Typing Indicator
+      onSnapshot(doc(db, currentCollection, "_status"), (snap) => {
         if (!snap.exists()) return;
-        const data = snap.data();
         const bubble = document.getElementById('typing-bubble-container');
-        const otherUserTyping = Object.entries(data).find(([user, ts]) => {
-            return user !== currentUserDisplay && ts && (Math.abs(Date.now() - ts.toDate()) < 5000);
-        });
-        if (otherUserTyping && bubble) {
-            bubble.style.display = 'flex';
-            scrollToBottom();
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => { bubble.style.display = 'none'; }, 4000);
-        } else if (bubble) {
-            bubble.style.display = 'none';
-        }
+        const isTyping = Object.entries(snap.data()).find(([user, ts]) => user !== currentUserDisplay && ts && (Math.abs(Date.now() - ts.toDate()) < 5000));
+        if (bubble) { bubble.style.display = isTyping ? 'flex' : 'none'; if(isTyping) scrollToBottom(); }
       });
     }
 
+    // --- UTILS ---
     function isBase64(str) { try { return btoa(atob(str)) == str; } catch (err) { return false; } }
     window.toggleRecording = async () => {
         const btn = document.getElementById('mic-btn');
         if (!mediaRecorder || mediaRecorder.state === 'inactive') {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus', bitsPerSecond: 16000 });
-                mediaRecorder.start();
-                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+                mediaRecorder.start(); audioChunks = [];
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = sendAudio;
-                btn.classList.add('active');
-                setTimeout(() => { if(mediaRecorder.state==='recording') mediaRecorder.stop(); }, 30000);
+                btn.classList.add('active'); setTimeout(() => { if(mediaRecorder.state==='recording') mediaRecorder.stop(); }, 30000);
             } catch(e) { alert("Mic Error"); }
         } else { mediaRecorder.stop(); btn.classList.remove('active'); }
     };
     async function sendAudio() {
-        const blob = new Blob(audioChunks, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = async () => {
-            const base64 = reader.result;
-            if (base64.length > 1000000) { alert("Audio too long!"); return; }
-            await addDoc(collection(db, currentCollection), { 
-                audio: base64, sender: currentUserDisplay, type: 'audio', time: serverTimestamp(), read: false 
-            });
-        };
-        document.getElementById('mic-btn').classList.remove('active');
+        const blob = new Blob(audioChunks, { type: 'audio/webm' }); const reader = new FileReader(); reader.readAsDataURL(blob);
+        reader.onloadend = async () => { await addDoc(collection(db, currentCollection), { audio: reader.result, sender: currentUserDisplay, type: 'audio', time: serverTimestamp(), read: false }); };
     }
     window.startReply = (sender, text) => { replyTarget = { sender, text }; document.getElementById('reply-preview').style.display = 'flex'; document.getElementById('reply-to-name').textContent = "Replying to " + sender; document.getElementById('reply-to-text').textContent = text; document.getElementById('txt').focus(); };
     window.cancelReply = () => { replyTarget = null; document.getElementById('reply-preview').style.display = 'none'; };
-    function loadWallpaper() { 
-        getDoc(doc(db, currentCollection, "_settings")).then(docSnap => {
-            const screen = document.getElementById('chat-screen'); 
-            if (docSnap.exists() && docSnap.data().wallpaper) { screen.style.backgroundImage = `url('${docSnap.data().wallpaper}')`; screen.classList.add('has-wallpaper'); } else { screen.style.backgroundImage = ''; screen.classList.remove('has-wallpaper'); } 
-        });
-    }
     window.send = async () => { 
-        const txt = document.getElementById('txt'); 
-        let val = txt.value.trim(); 
+        const txt = document.getElementById('txt'); let val = txt.value.trim(); 
         if(val && currentCollection) { 
-            const encryptedVal = btoa(val); 
-            const payload = { text: encryptedVal, sender: currentUserDisplay, type: 'text', time: serverTimestamp(), read: false }; 
+            const payload = { text: btoa(val), sender: currentUserDisplay, type: 'text', time: serverTimestamp(), read: false }; 
             if (replyTarget) { payload.reply = replyTarget; cancelReply(); } 
-            await addDoc(collection(db, currentCollection), payload); 
-            txt.value = ""; txt.style.height = '22px'; txt.focus(); 
+            await addDoc(collection(db, currentCollection), payload); txt.value = ""; txt.style.height = '22px'; txt.focus(); 
         } 
     };
-    window.handleImageUpload = (input) => { const file = input.files[0]; if (!file) return; processImage(file, (base64) => { addDoc(collection(db, currentCollection), { image: base64, sender: currentUserDisplay, type: 'image', time: serverTimestamp(), read: false }); }); input.value = ''; };
-    window.handleWallpaperUpload = (input) => { const file = input.files[0]; if(!file) return; processImage(file, (base64) => setWallpaper(base64)); input.value = ''; document.getElementById('wp-modal').style.display = 'none'; };
-    function processImage(file, callback, maxW=800, maxH=800) { 
-        const reader = new FileReader(); 
-        reader.onload = (e) => { 
-            const img = new Image(); 
-            img.src = e.target.result; 
-            img.onload = () => { 
-                const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d'); 
-                let w = img.width, h = img.height;
-                if (w > maxW) { h = (maxW/w)*h; w = maxW; } if (h > maxH) { w = (maxH/h)*w; h = maxH; }
-                cvs.width = w; cvs.height = h; ctx.drawImage(img, 0, 0, w, h); 
-                callback(cvs.toDataURL('image/jpeg', 0.7)); 
-            } 
-        }; 
-        reader.readAsDataURL(file); 
-    }
-    async function setWallpaper(url) { await setDoc(doc(db, currentCollection, "_settings"), { wallpaper: url }, { merge: true }); loadWallpaper(); }
+    window.handleImageUpload = (i) => { const f = i.files[0]; if (!f) return; processImage(f, (b) => { addDoc(collection(db, currentCollection), { image: b, sender: currentUserDisplay, type: 'image', time: serverTimestamp(), read: false }); }); i.value = ''; };
+    window.handleWallpaperUpload = (i) => { const f = i.files[0]; if(!f) return; processImage(f, (b) => setWallpaper(b)); i.value = ''; document.getElementById('wp-modal').style.display = 'none'; };
+    function processImage(file, cb) { const r = new FileReader(); r.onload = (e) => { const i = new Image(); i.src = e.target.result; i.onload = () => { const c = document.createElement('canvas'); const x = c.getContext('2d'); let w = i.width, h = i.height; if (w > 800) { h = (800/w)*h; w = 800; } if (h > 800) { w = (800/h)*w; h = 800; } c.width = w; c.height = h; x.drawImage(i, 0, 0, w, h); cb(c.toDataURL('image/jpeg', 0.7)); } }; r.readAsDataURL(file); }
+    async function setWallpaper(u) { await setDoc(doc(db, currentCollection, "_settings"), { wallpaper: u }, { merge: true }); loadWallpaper(); }
     window.useLastPhoto = () => { if(lastImageSent) { setWallpaper(lastImageSent); closeWallpaperModal(); } else alert("No photos!"); };
     window.resetWallpaper = async () => { await setDoc(doc(db, currentCollection, "_settings"), { wallpaper: null }, { merge: true }); closeWallpaperModal(); loadWallpaper(); };
     window.openWallpaperModal = () => document.getElementById('wp-modal').style.display = 'flex';
     window.closeWallpaperModal = () => document.getElementById('wp-modal').style.display = 'none';
     window.deleteMsg = async (id) => { if(currentCollection) await deleteDoc(doc(db, currentCollection, id)); };
-    function scrollToBottom() { const div = document.getElementById('messages'); div.scrollTop = div.scrollHeight; }
+    function scrollToBottom() { const d = document.getElementById('messages'); d.scrollTop = d.scrollHeight; } window.scrollToBottom = scrollToBottom;
+    function loadWallpaper() { getDoc(doc(db, currentCollection, "_settings")).then(s => { const el = document.getElementById('chat-screen'); if (s.exists() && s.data().wallpaper) { el.style.backgroundImage = `url('${s.data().wallpaper}')`; el.classList.add('has-wallpaper'); } else { el.style.backgroundImage = ''; el.classList.remove('has-wallpaper'); } }); }
+
+    // --- OTHER MODAL ACTIONS ---
+    window.openProfileModal = () => document.getElementById('profile-modal').style.display = 'flex';
+    window.handleProfilePicUpload = (i) => { const f = i.files[0]; if (!f) return; processImage(f, (b) => { updateDoc(doc(db, "users", currentUserId), { profilePic: b }).then(() => { alert("Updated!"); guestData.profilePic = b; document.getElementById('self-avatar-display').style.backgroundImage = `url('${b}')`; document.getElementById('profile-modal').style.display = 'none'; }); }); i.value = ''; };
+    window.renameSelf = async () => { const n = prompt("New Name:", currentUserDisplay); if (!n) return; await updateDoc(doc(db, "users", currentUserId), { name: n }); await deleteDoc(doc(db, "directory", currentUserDisplay.toLowerCase())); await setDoc(doc(db, "directory", n.toLowerCase()), { uid: currentUserId, name: n }); currentUserDisplay = n; alert("Updated!"); document.getElementById('profile-modal').style.display = 'none'; };
+    window.changePassword = async () => { const np = prompt("New Password (lowercase):")?.toLowerCase().trim(); if(!np || np.length<3) return; if(!confirm("Change & Logout?")) return; await setDoc(doc(db, "users", np), guestData); await deleteDoc(doc(db, "users", currentUserId)); location.reload(); };
+    window.handleAddButton = async () => { if(isAdmin) { const n = prompt("Name:"); const p = prompt("Pass:"); if(!n||!p) return; await setDoc(doc(db, "users", p), { name: n, collection: "chats_"+Date.now(), color: "#"+Math.floor(Math.random()*16777215).toString(16), created: serverTimestamp() }); } else { const t = prompt("Add User:"); if(!t) return; const d = await getDoc(doc(db, "directory", t.toLowerCase())); if(!d.exists()) return alert("404"); const rid = "private_" + [currentUserId, d.data().uid].sort().join("_"); await addDoc(collection(db, `users/${currentUserId}/contacts`), { name: d.data().name, roomId: rid, color: "#000" }); await addDoc(collection(db, `users/${d.data().uid}/contacts`), { name: currentUserDisplay, roomId: rid, color: "#000" }); } };
+    window.deleteUser = async (e, id) => { e.stopPropagation(); if(confirm("Delete?")) await deleteDoc(doc(db, "users", id)); };
+    window.deleteContact = async (e, id) => { e.stopPropagation(); if(confirm("Remove?")) await deleteDoc(doc(db, `users/${currentUserId}/contacts`, id)); };
+    window.renameContact = async (e, id, old) => { e.stopPropagation(); const n = prompt("Rename:", old); if(n) await updateDoc(doc(db, `users/${currentUserId}/contacts`, id), { name: n }); };
+    
     document.getElementById('pass').addEventListener('keydown', (e) => { if(e.key === 'Enter') attemptLogin(); });
-    const txtInput = document.getElementById('txt');
-    txtInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
-    
-    // UPDATED INPUT LISTENER FOR TYPING INDICATOR
-    txtInput.addEventListener('input', function() { 
-        this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; 
-        if(this.value === '') this.style.height = '22px'; 
-        const now = Date.now();
-        if (now - lastTypingTime > 2000 && currentCollection) {
-            lastTypingTime = now;
-            setDoc(doc(db, currentCollection, "_status"), { [currentUserDisplay]: serverTimestamp() }, { merge: true });
-        }
-    });
-    
-    // FINAL FIX: ATTACH SCROLL TO WINDOW FOR IMAGE ONLOAD
-    window.scrollToBottom = scrollToBottom;
+    document.getElementById('txt').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+    document.getElementById('txt').addEventListener('input', function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; if(this.value === '') this.style.height = '22px'; const now = Date.now(); if (now - lastTypingTime > 2000 && currentCollection) { lastTypingTime = now; setDoc(doc(db, currentCollection, "_status"), { [currentUserDisplay]: serverTimestamp() }, { merge: true }); } });
   </script>
 </body>
 </html>
