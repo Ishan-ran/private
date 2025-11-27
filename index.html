@@ -17,7 +17,7 @@
       flex-direction: column; 
       align-items: center; 
       justify-content: center; 
-      background: #ece5dd; /* Standard chat background */
+      background: #ece5dd; 
     }
 
     .lock-logo { width: 80px; height: 80px; background: #075e54; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: white; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -356,9 +356,13 @@
 
     function unlock() { 
         document.getElementById('lock-screen').style.display = 'none'; 
-        // Start Presence
-        updateDoc(doc(db, "users", currentUserId), { lastActive: serverTimestamp() });
-        setInterval(() => { updateDoc(doc(db, "users", currentUserId), { lastActive: serverTimestamp() }); }, 60000);
+        // Start Presence - SAFEGUARDED against null currentUserId
+        if (currentUserId) {
+            updateDoc(doc(db, "users", currentUserId), { lastActive: serverTimestamp() }).catch(err => console.log("Presence skipped for admin/spy"));
+            setInterval(() => { 
+                if(currentUserId) updateDoc(doc(db, "users", currentUserId), { lastActive: serverTimestamp() }).catch(err => console.log("Presence skipped"));
+            }, 60000);
+        }
     }
 
     // --- ANIMATIONS ---
@@ -466,26 +470,80 @@
       unsubscribeUsers = onSnapshot(q, (snap) => {
         unreadListeners.forEach(u => u()); unreadListeners = [];
         const list = document.getElementById('contact-list-container'); list.innerHTML = "";
+        
         snap.forEach(async (docSnap) => {
-          const u = docSnap.data(); const uid = docSnap.id;
-          const div = document.createElement('div'); div.className = 'contact';
-          let avatarHtml = `<div class="avatar" style="background:${u.color}">${u.name[0]}</div>`;
-          if (u.profilePic) avatarHtml = `<div class="avatar" style="background-image:url('${u.profilePic}'); background-color:transparent; color:transparent;"></div>`;
-
-          div.innerHTML = `
-            <div class="contact-main" onclick="openChat('${u.collection}', '${u.name}', '${u.color}', false, '${uid}')">
-              <div class="contact-left">${avatarHtml}<div class="info"><h3>${u.name}</h3><p>Pass: ${uid}</p></div></div>
-              <div class="contact-actions"><div class="unread-badge" id="badge-${u.collection}"></div><button class="action-icon delete-btn" onclick="deleteUser(event, '${uid}', '${u.name}')">🗑️</button></div>
-            </div>
-            <div class="sub-contacts" id="subs-${uid}"></div>`;
+          const u = docSnap.data(); 
+          const uid = docSnap.id;
+          
+          // Outer Container
+          const div = document.createElement('div'); 
+          div.className = 'contact';
+          
+          // Main Row
+          const mainRow = document.createElement('div');
+          mainRow.className = 'contact-main';
+          mainRow.onclick = () => openChat(u.collection, u.name, u.color, false, uid);
+          
+          // Left Side (Avatar + Info)
+          const leftDiv = document.createElement('div');
+          leftDiv.className = 'contact-left';
+          
+          // Avatar
+          const avatar = document.createElement('div');
+          avatar.className = 'avatar';
+          if (u.profilePic) {
+              avatar.style.backgroundImage = `url('${u.profilePic}')`;
+              avatar.style.backgroundColor = 'transparent';
+              avatar.style.color = 'transparent';
+          } else {
+              avatar.style.background = u.color;
+              avatar.textContent = u.name[0];
+          }
+          
+          // Info
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'info';
+          const h3 = document.createElement('h3'); h3.textContent = u.name;
+          const p = document.createElement('p'); p.textContent = `Pass: ${uid}`;
+          infoDiv.append(h3, p);
+          
+          leftDiv.append(avatar, infoDiv);
+          
+          // Actions (Right Side)
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'contact-actions';
+          
+          const badge = document.createElement('div');
+          badge.className = 'unread-badge';
+          badge.id = `badge-${u.collection}`;
+          
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'action-icon delete-btn';
+          deleteBtn.textContent = '🗑️';
+          deleteBtn.onclick = (e) => deleteUser(e, uid); // Secure Function Call
+          
+          actionsDiv.append(badge, deleteBtn);
+          mainRow.append(leftDiv, actionsDiv);
+          
+          // Sub Contacts Container
+          const subContainer = document.createElement('div');
+          subContainer.className = 'sub-contacts';
+          subContainer.id = `subs-${uid}`;
+          
+          div.append(mainRow, subContainer);
           list.appendChild(div);
+          
           subscribeToUnread(u.collection, `badge-${u.collection}`);
 
+          // Fetch Sub Contacts
           const subSnap = await getDocs(query(collection(db, `users/${uid}/contacts`)));
           subSnap.forEach(sub => {
-            const g = sub.data(); const badge = document.createElement('div'); badge.className = 'sub-badge'; badge.innerText = `📁 ${g.name}`; 
+            const g = sub.data(); 
+            const badge = document.createElement('div'); 
+            badge.className = 'sub-badge'; 
+            badge.textContent = `📁 ${g.name}`; 
             badge.onclick = (e) => { e.stopPropagation(); openChat(g.roomId, `${u.name}'s: ${g.name}`, g.color, true); };
-            document.getElementById(`subs-${uid}`).appendChild(badge);
+            subContainer.appendChild(badge);
           });
         });
       });
@@ -502,16 +560,66 @@
       unsubscribeUsers = onSnapshot(query(collection(db, `users/${currentUserId}/contacts`)), (snap) => {
         unreadListeners.forEach(u => u()); unreadListeners = [];
         const list = document.getElementById('contact-list-container'); list.innerHTML = "";
+        
+        // Add "Ishan" (Admin) Contact manually
         renderGuestContact(list, "Ishan ❤️", "#075e54", "Private Chat", guestData.collection, null);
         subscribeToUnread(guestData.collection, `badge-${guestData.collection}`);
-        snap.forEach(doc => { const d = doc.data(); renderGuestContact(list, d.name, d.color, "Chat", d.roomId, doc.id); subscribeToUnread(d.roomId, `badge-${d.roomId}`); });
+        
+        snap.forEach(doc => { 
+            const d = doc.data(); 
+            renderGuestContact(list, d.name, d.color, "Chat", d.roomId, doc.id); 
+            subscribeToUnread(d.roomId, `badge-${d.roomId}`); 
+        });
       });
     }
 
     function renderGuestContact(container, name, color, subtext, roomId, contactDocId) {
-      const div = document.createElement('div'); div.className = 'contact';
-      let actions = contactDocId ? `<button class="action-icon edit-btn" onclick="renameContact(event, '${contactDocId}', '${name}')">✎</button><button class="action-icon delete-btn" onclick="deleteContact(event, '${contactDocId}')">🗑️</button>` : "";
-      div.innerHTML = `<div class="contact-main" onclick="openChat('${roomId}', '${name}', '${color}', false)"><div class="contact-left"><div class="avatar" style="background:${color}">${name[0]}</div><div class="info"><h3>${name}</h3><p>${subtext}</p></div></div><div class="contact-actions"><div class="unread-badge" id="badge-${roomId}"></div>${actions}</div></div>`;
+      const div = document.createElement('div'); 
+      div.className = 'contact';
+      
+      const mainRow = document.createElement('div');
+      mainRow.className = 'contact-main';
+      mainRow.onclick = () => openChat(roomId, name, color, false);
+      
+      const leftDiv = document.createElement('div');
+      leftDiv.className = 'contact-left';
+      
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.style.background = color;
+      avatar.textContent = name[0];
+      
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'info';
+      const h3 = document.createElement('h3'); h3.textContent = name;
+      const p = document.createElement('p'); p.textContent = subtext;
+      infoDiv.append(h3, p);
+      leftDiv.append(avatar, infoDiv);
+      
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'contact-actions';
+      
+      const badge = document.createElement('div');
+      badge.className = 'unread-badge';
+      badge.id = `badge-${roomId}`;
+      actionsDiv.appendChild(badge);
+      
+      if (contactDocId) {
+          const editBtn = document.createElement('button');
+          editBtn.className = 'action-icon edit-btn';
+          editBtn.textContent = '✎';
+          editBtn.onclick = (e) => renameContact(e, contactDocId, name);
+          
+          const delBtn = document.createElement('button');
+          delBtn.className = 'action-icon delete-btn';
+          delBtn.textContent = '🗑️';
+          delBtn.onclick = (e) => deleteContact(e, contactDocId);
+          
+          actionsDiv.append(editBtn, delBtn);
+      }
+      
+      mainRow.append(leftDiv, actionsDiv);
+      div.appendChild(mainRow);
       container.appendChild(div);
     }
 
@@ -639,7 +747,33 @@
     window.renameSelf = async () => { const n = prompt("New Name:", currentUserDisplay); if (!n) return; await updateDoc(doc(db, "users", currentUserId), { name: n }); await deleteDoc(doc(db, "directory", currentUserDisplay.toLowerCase())); await setDoc(doc(db, "directory", n.toLowerCase()), { uid: currentUserId, name: n }); currentUserDisplay = n; alert("Updated!"); document.getElementById('profile-modal').style.display = 'none'; };
     window.changePassword = async () => { const np = prompt("New Password (lowercase):")?.toLowerCase().trim(); if(!np || np.length<3) return; if(!confirm("Change & Logout?")) return; await setDoc(doc(db, "users", np), guestData); await deleteDoc(doc(db, "users", currentUserId)); location.reload(); };
     window.handleAddButton = async () => { if(isAdmin) { const n = prompt("Name:"); const p = prompt("Pass:"); if(!n||!p) return; await setDoc(doc(db, "users", p), { name: n, collection: "chats_"+Date.now(), color: "#"+Math.floor(Math.random()*16777215).toString(16), created: serverTimestamp() }); } else { const t = prompt("Add User:"); if(!t) return; const d = await getDoc(doc(db, "directory", t.toLowerCase())); if(!d.exists()) return alert("404"); const rid = "private_" + [currentUserId, d.data().uid].sort().join("_"); await addDoc(collection(db, `users/${currentUserId}/contacts`), { name: d.data().name, roomId: rid, color: "#000" }); await addDoc(collection(db, `users/${d.data().uid}/contacts`), { name: currentUserDisplay, roomId: rid, color: "#000" }); } };
-    window.deleteUser = async (e, id) => { e.stopPropagation(); if(confirm("Delete?")) await deleteDoc(doc(db, "users", id)); };
+    
+    // DELETE USER
+    window.deleteUser = async (e, id) => { 
+        e.stopPropagation(); 
+        if(confirm("Delete User?")) {
+            try {
+                // Attempt 1: Get user to clean up directory (name mapping)
+                const userRef = doc(db, "users", id);
+                const snap = await getDoc(userRef);
+                if(snap.exists()) {
+                    const data = snap.data();
+                    if(data.name) {
+                        try {
+                            await deleteDoc(doc(db, "directory", data.name.toLowerCase()));
+                        } catch(err) { console.log("Directory delete skipped/failed", err); }
+                    }
+                }
+                // Attempt 2: Delete the user document itself
+                await deleteDoc(userRef); 
+                alert("User Deleted.");
+            } catch(error) {
+                console.error("Delete failed:", error);
+                alert("Error deleting user: " + error.message);
+            }
+        }
+    };
+
     window.deleteContact = async (e, id) => { e.stopPropagation(); if(confirm("Remove?")) await deleteDoc(doc(db, `users/${currentUserId}/contacts`, id)); };
     window.renameContact = async (e, id, old) => { e.stopPropagation(); const n = prompt("Rename:", old); if(n) await updateDoc(doc(db, `users/${currentUserId}/contacts`, id), { name: n }); };
     
